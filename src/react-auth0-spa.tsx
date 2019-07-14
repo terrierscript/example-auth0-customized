@@ -85,7 +85,7 @@ const useAuthValues = initOptions => {
       auth0Client.logout({
         returnTo: window.location.origin
       }),
-    [window.location.origin]
+    [window.location.origin, auth0Client]
   )
   return {
     isAuthenticated,
