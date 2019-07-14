@@ -20,7 +20,6 @@ const useAuthValues = initOptions => {
   const [user, setUser] = useState()
   const [auth0Client, setAuth0] = useState()
   const [loading, setLoading] = useState(true)
-  const [popupOpen, setPopupOpen] = useState(false)
 
   const onRedirectCallback = useCallback(
     appState => {
@@ -58,28 +57,6 @@ const useAuthValues = initOptions => {
     // eslint-disable-next-line
   }, [])
 
-  const loginWithPopup = async (params = {}) => {
-    setPopupOpen(true)
-    try {
-      await auth0Client.loginWithPopup(params)
-    } catch (error) {
-      console.error(error)
-    } finally {
-      setPopupOpen(false)
-    }
-    const user = await auth0Client.getUser()
-    setUser(user)
-    setIsAuthenticated(true)
-  }
-
-  const handleRedirectCallback = async () => {
-    setLoading(true)
-    await auth0Client.handleRedirectCallback()
-    const user = await auth0Client.getUser()
-    setLoading(false)
-    setIsAuthenticated(true)
-    setUser(user)
-  }
   const logoutWithRedirect = useCallback(
     () =>
       auth0Client.logout({
@@ -91,15 +68,8 @@ const useAuthValues = initOptions => {
     isAuthenticated,
     user,
     loading,
-    popupOpen,
-    loginWithPopup,
     logoutWithRedirect,
-    handleRedirectCallback,
-    getIdTokenClaims: (...p) => auth0Client.getIdTokenClaims(...p),
-    loginWithRedirect: (...p) => auth0Client.loginWithRedirect(...p),
-    getTokenSilently: (...p) => auth0Client.getTokenSilently(...p),
-    getTokenWithPopup: (...p) => auth0Client.getTokenWithPopup(...p),
-    logout: (...p) => auth0Client.logout(...p)
+    loginWithRedirect: (...p) => auth0Client.loginWithRedirect(...p)
   }
 }
 
