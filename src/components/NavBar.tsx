@@ -91,38 +91,31 @@ const AuthenticatedMobileMenu = () => {
   )
 }
 
-const UnauthenticatedDesktopMenu = () => {
+const LoginButton = ({ ...props }) => {
   const { loginWithRedirect } = useAuth0()
   return (
+    <Button {...props} onClick={() => loginWithRedirect({})}>
+      Log in
+    </Button>
+  )
+}
+const UnauthenticatedDesktopMenu = () => {
+  return (
     <NavItem>
-      <Button
-        id="qsLoginBtn"
-        color="primary"
-        className="btn-margin"
-        onClick={() => loginWithRedirect({})}
-      >
-        Log in
-      </Button>
+      <LoginButton id="qsLoginBtn" color="primary" className="btn-margin" />
     </NavItem>
   )
 }
 const UnauthenticatedMobileMenu = () => {
-  const { loginWithRedirect } = useAuth0()
   return (
     <Nav className="d-md-none" navbar>
       <NavItem>
-        <Button
-          id="qsLoginBtn"
-          color="primary"
-          block
-          onClick={() => loginWithRedirect({})}
-        >
-          Log in
-        </Button>
+        <LoginButton id="qsLoginBtn" color="primary" block />
       </NavItem>
     </Nav>
   )
 }
+
 const NavBar = () => {
   const [isOpen, setIsOpen] = useState(false)
   const { isAuthenticated } = useAuth0()
