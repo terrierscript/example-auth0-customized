@@ -80,12 +80,20 @@ const useAuthValues = initOptions => {
     setIsAuthenticated(true)
     setUser(user)
   }
+  const logoutWithRedirect = useCallback(
+    () =>
+      auth0Client.logout({
+        returnTo: window.location.origin
+      }),
+    [window.location.origin]
+  )
   return {
     isAuthenticated,
     user,
     loading,
     popupOpen,
     loginWithPopup,
+    logoutWithRedirect,
     handleRedirectCallback,
     getIdTokenClaims: (...p) => auth0Client.getIdTokenClaims(...p),
     loginWithRedirect: (...p) => auth0Client.loginWithRedirect(...p),
