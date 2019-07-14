@@ -7,12 +7,44 @@ export const Auth0Context = React.createContext<undefined | Auth0ContextValue>(
   undefined
 )
 
-export const useAuth0 = (): Auth0ContextValue => {
+const useAuth0Raw = () => {
   const ctx = useContext(Auth0Context)
   if (ctx === undefined) {
     throw new Error()
   }
   return ctx
+}
+export const useAuth0 = () => {
+  const ctx = useContext(Auth0Context)
+  if (ctx === undefined) {
+    throw new Error()
+  }
+  const { setUser, setIsAuthenticated, auth0Client, ...rest } = ctx
+
+  return rest
+}
+
+export const usePopup = () => {
+  const ctx = useAuth0Raw()
+  const { auth0Client, setUser, setIsAuthenticated } = ctx
+  const [popupOpen, setPopupOpen] = useState(false)
+  const loginWithPopup = async (params = {}) => {
+    setPopupOpen(true)
+    try {
+      await auth0Client.loginWithPopup(params)
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setPopupOpen(false)
+    }
+    const user = await auth0Client.getUser()
+    setUser(user)
+    setIsAuthenticated(true)
+  }
+  return {
+    popupOpen,
+    loginWithPopup
+  }
 }
 
 const useAuthValues = initOptions => {
@@ -20,7 +52,6 @@ const useAuthValues = initOptions => {
   const [user, setUser] = useState()
   const [auth0Client, setAuth0] = useState()
   const [loading, setLoading] = useState(true)
-  const [popupOpen, setPopupOpen] = useState(false)
 
   const onRedirectCallback = useCallback(
     appState => {
@@ -58,20 +89,6 @@ const useAuthValues = initOptions => {
     // eslint-disable-next-line
   }, [])
 
-  const loginWithPopup = async (params = {}) => {
-    setPopupOpen(true)
-    try {
-      await auth0Client.loginWithPopup(params)
-    } catch (error) {
-      console.error(error)
-    } finally {
-      setPopupOpen(false)
-    }
-    const user = await auth0Client.getUser()
-    setUser(user)
-    setIsAuthenticated(true)
-  }
-
   const handleRedirectCallback = async () => {
     setLoading(true)
     await auth0Client.handleRedirectCallback()
@@ -90,9 +107,10 @@ const useAuthValues = initOptions => {
   return {
     isAuthenticated,
     user,
+    auth0Client,
     loading,
-    popupOpen,
-    loginWithPopup,
+    setUser,
+    setIsAuthenticated,
     logoutWithRedirect,
     handleRedirectCallback,
     getIdTokenClaims: (...p) => auth0Client.getIdTokenClaims(...p),
