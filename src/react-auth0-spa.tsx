@@ -1,26 +1,39 @@
 import React, { FC, useState, useEffect, useContext, useCallback } from "react"
 import createAuth0Client from "@auth0/auth0-spa-js"
 
-const DEFAULT_REDIRECT_CALLBACK = () =>
-  window.history.replaceState({}, document.title, window.location.pathname)
+type Auth0ContextValue = ReturnType<typeof useAuthValues>
 
-export const Auth0Context = React.createContext<undefined | unknown>(undefined)
-export const useAuth0 = () => useContext(Auth0Context)
+export const Auth0Context = React.createContext<undefined | Auth0ContextValue>(
+  undefined
+)
 
-export const Auth0Provider: FC<
-  {
-    onRedirectCallback?: (appState: any) => void
-  } & Auth0ClientOptions
-> = ({
-  children,
-  onRedirectCallback = DEFAULT_REDIRECT_CALLBACK,
-  ...initOptions
-}) => {
+export const useAuth0 = (): Auth0ContextValue => {
+  const ctx = useContext(Auth0Context)
+  if (ctx === undefined) {
+    throw new Error()
+  }
+  return ctx
+}
+
+const useAuthValues = initOptions => {
   const [isAuthenticated, setIsAuthenticated] = useState()
   const [user, setUser] = useState()
   const [auth0Client, setAuth0] = useState()
   const [loading, setLoading] = useState(true)
   const [popupOpen, setPopupOpen] = useState(false)
+
+  const onRedirectCallback = useCallback(
+    appState => {
+      window.history.replaceState(
+        {},
+        document.title,
+        appState && appState.targetUrl
+          ? appState.targetUrl
+          : window.location.pathname
+      )
+    },
+    [window]
+  )
 
   useEffect(() => {
     const initAuth0 = async () => {
@@ -32,8 +45,6 @@ export const Auth0Provider: FC<
         onRedirectCallback(appState)
       }
 
-      // console.log(auth0FromHook.checkSession())
-
       const isAuthenticated = await auth0FromHook.isAuthenticated()
       setIsAuthenticated(isAuthenticated)
 
@@ -41,7 +52,6 @@ export const Auth0Provider: FC<
         const user = await auth0FromHook.getUser()
         setUser(user)
       }
-
       setLoading(false)
     }
     initAuth0()
@@ -70,23 +80,26 @@ export const Auth0Provider: FC<
     setIsAuthenticated(true)
     setUser(user)
   }
-  return (
-    <Auth0Context.Provider
-      value={{
-        isAuthenticated,
-        user,
-        loading,
-        popupOpen,
-        loginWithPopup,
-        handleRedirectCallback,
-        getIdTokenClaims: (...p) => auth0Client.getIdTokenClaims(...p),
-        loginWithRedirect: (...p) => auth0Client.loginWithRedirect(...p),
-        getTokenSilently: (...p) => auth0Client.getTokenSilently(...p),
-        getTokenWithPopup: (...p) => auth0Client.getTokenWithPopup(...p),
-        logout: (...p) => auth0Client.logout(...p)
-      }}
-    >
-      {children}
-    </Auth0Context.Provider>
-  )
+  return {
+    isAuthenticated,
+    user,
+    loading,
+    popupOpen,
+    loginWithPopup,
+    handleRedirectCallback,
+    getIdTokenClaims: (...p) => auth0Client.getIdTokenClaims(...p),
+    loginWithRedirect: (...p) => auth0Client.loginWithRedirect(...p),
+    getTokenSilently: (...p) => auth0Client.getTokenSilently(...p),
+    getTokenWithPopup: (...p) => auth0Client.getTokenWithPopup(...p),
+    logout: (...p) => auth0Client.logout(...p)
+  }
+}
+
+export const Auth0Provider: FC<
+  {
+    onRedirectCallback?: (appState: any) => void
+  } & Auth0ClientOptions
+> = ({ children, ...initOptions }) => {
+  const value = useAuthValues(initOptions)
+  return <Auth0Context.Provider value={value}>{children}</Auth0Context.Provider>
 }
